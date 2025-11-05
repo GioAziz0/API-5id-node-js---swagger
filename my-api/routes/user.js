@@ -263,6 +263,9 @@ router.put('/users/:name', authMiddleware, (req, res) => {
         if (idx === -1) {
             return res.status(404).json({ error: 'Utente non trovato.' });
         }
+        if (!users[idx].hasOwnProperty("name") || !users[idx].hasOwnProperty("age")) {
+            return res.status(400).json({ error: 'Bad Request: name and age are required.' });
+        }
         users[idx] = req.body;
         fs.writeFile(usersPath, JSON.stringify(users, null, 2), (writeErr) => {
             if (writeErr) return res.status(500).json({ error: 'Impossibile aggiornare l\'utente.' });
