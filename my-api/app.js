@@ -34,7 +34,7 @@
    };
    // Middleware per il parsing JSON
    app.use(express.json());
-
+   app.use('/webApp',express.static('public'))
    const swaggerDocs = swaggerJSDoc(swaggerOptions);
    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
