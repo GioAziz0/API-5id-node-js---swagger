@@ -1,1 +1,240 @@
-WEB application page
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Users Dashboard</title>
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+    body { background-color: #f0f2f5; }
+    .container { padding-top: 20px; }
+    .table td, .table th { vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Users Dashboard</a>
+  </div>
+</nav>
+
+<div class="container mt-4">
+
+    <!-- Aggiungi Utente -->
+    <div class="d-flex justify-content-end mb-3">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="bi bi-person-plus"></i> Aggiungi Utente
+        </button>
+    </div>
+
+    <!-- Tabella Utenti -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome</th>
+                    <th>Età</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody id="users"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Dettagli Utente -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailsModalLabel">Dettagli Utente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <pre id="modalDetails"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Aggiungi Utente -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="addUserForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addUserModalLabel">Aggiungi Utente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="newName" class="form-label">Nome</label>
+            <input type="text" id="newName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="newAge" class="form-label">Età</label>
+            <input type="number" id="newAge" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Aggiungi</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Modifica Utente -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editUserForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editUserModalLabel">Modifica Utente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="editName" class="form-label">Nome</label>
+            <input type="text" id="editName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="editAge" class="form-label">Età</label>
+            <input type="number" id="editAge" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Salva</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS + Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const API_BASE = "https://effective-couscous-x5954gv5wj5xf99wx-3000.app.github.dev/api";
+const AUTH_HEADER = { "Authorization": "Bearer 5IDtoken" };
+
+let currentUsers = {};
+let editingUser = null;
+
+// ----------------------
+// FETCH LISTA UTENTI
+// ----------------------
+async function fetchUsers() {
+    const res = await fetch(`${API_BASE}/users`);
+    const data = await res.json();
+    updateUserTable(data);
+}
+
+// ----------------------
+// AGGIORNA TABELLA UTENTI
+// ----------------------
+function updateUserTable(users) {
+    const tbody = document.getElementById("users");
+    tbody.innerHTML = "";
+
+    users.forEach(user => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${user.name}</td>
+            <td>${user.age}</td>
+            <td>
+                <button class="btn btn-info btn-sm me-1" onclick="viewUser('${user.name}')"><i class="bi bi-info-circle"></i></button>
+                <button class="btn btn-warning btn-sm me-1" onclick="openEditModal('${user.name}')"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.name}')"><i class="bi bi-trash"></i></button>
+            </td>`;
+        tbody.appendChild(tr);
+        currentUsers[user.name] = user;
+    });
+}
+
+// ----------------------
+// MODAL DETTAGLI
+// ----------------------
+async function viewUser(name) {
+    const res = await fetch(`${API_BASE}/users/${name}`);
+    const user = await res.json();
+    document.getElementById("modalDetails").innerText = JSON.stringify(user, null, 2);
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    modal.show();
+}
+
+// ----------------------
+// MODAL MODIFICA
+// ----------------------
+function openEditModal(name) {
+    editingUser = name;
+    const user = currentUsers[name];
+    document.getElementById("editName").value = user.name;
+    document.getElementById("editAge").value = user.age;
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    modal.show();
+}
+
+document.getElementById("editUserForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const newName = document.getElementById("editName").value;
+    const newAge = Number(document.getElementById("editAge").value);
+
+    await fetch(`${API_BASE}/users/${editingUser}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...AUTH_HEADER },
+        body: JSON.stringify({ name: newName, age: newAge })
+    });
+
+    editingUser = null;
+    await fetchUsers();
+    bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+});
+
+// ----------------------
+// AGGIUNTA UTENTE
+// ----------------------
+document.getElementById("addUserForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("newName").value;
+    const age = Number(document.getElementById("newAge").value);
+
+    await fetch(`${API_BASE}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...AUTH_HEADER },
+        body: JSON.stringify({ name, age })
+    });
+
+    await fetchUsers();
+    e.target.reset();
+    bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+});
+
+// ----------------------
+// DELETE
+// ----------------------
+async function deleteUser(name) {
+    await fetch(`${API_BASE}/users/${name}`, {
+        method: "DELETE",
+        headers: AUTH_HEADER
+    });
+    await fetchUsers();
+}
+
+// ----------------------
+// AUTO REFRESH OGNI 2 SECONDI
+// ----------------------
+setInterval(fetchUsers, 2000);
+
+// Caricamento iniziale
+fetchUsers();
+</script>
+
+</body>
+</html>

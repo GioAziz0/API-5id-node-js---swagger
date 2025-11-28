@@ -17,7 +17,7 @@
            },
            servers: [
                {
-                   url: `https://supreme-sniffle-g5x5g7g6p6w2p7wg-3000.app.github.dev/api`,
+                   url: `https://effective-couscous-x5954gv5wj5xf99wx-3000.app.github.dev/api`,
                },
            ],
       components: {
